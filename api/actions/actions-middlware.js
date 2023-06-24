@@ -1,66 +1,40 @@
-// "eylem" routerını buraya yazın
-const router = require("express").Router();
+// eylemlerle ilgili ara katman yazılımları yazın
 const actionsModel = require("./actions-model");
-const mw = require("./actions-middlware");
+const projectModel = require("../projects/projects-model");
 
-router.get("/", async (req, res, next) => {
-  try {
-    const allActions = await actionsModel.get();
-    res.json(allActions);
-  } catch (error) {
-    next(error);
-  }
-});
-router.get("/:id", mw.validateActionId, async (req, res, next) => {
-  try {
-    res.json(req.existAction);
-  } catch (error) {
-    next(error);
-  }
-});
-router.post("/", mw.validateActionPayload, async (req, res, next) => {
-  try {
-    let actionModel = {
-      project_id: req.body.project_id,
-      description: req.body.description,
-      notes: req.body.notes,
-      completed: req.body.completed,
-    };
-    const insertedAction = await actionsModel.insert(actionModel);
-    res.status(201).json(insertedAction);
-  } catch (error) {
-    next(error);
-  }
-});
-router.put(
-  "/:id",
-  mw.validateActionId,
-  mw.validateActionPayload,
-  async (req, res, next) => {
+async function validateActionId(req,res,next){
     try {
-      let actionModel = {
-        project_id: req.body.project_id,
-        description: req.body.description,
-        notes: req.body.notes,
-        completed: req.body.completed,
-      };
-      const updatedAction = await actionsModel.update(
-        req.params.id,
-        actionModel
-      );
-      res.json(updatedAction);
+        let existAction = await actionsModel.get(req.params.id);
+        if(!existAction){
+            res.status(404).json({message:"Actions not found"})
+        }else{
+            req.existAction = existAction;
+            next();
+        }
     } catch (error) {
-      next(error);
+        next(error);
     }
-  }
-);
-router.delete("/:id", mw.validateActionId, async (req, res, next) => {
-  try {
-    await actionsModel.remove(req.params.id);
-    res.json({ message: "Silme işlemi başarılı" });
-  } catch (error) {
-    next(error);
-  }
-});
+}
 
-module.exports = router;
+async function validateActionPayload(req,res,next){
+    try {
+        let {notes,description,project_id} = req.body;
+        if(!notes || !description || !project_id){
+            res.status(400).json({message:"alanları kontrol ediniz"});
+        }else{
+            const existProject = await projectModel.get(project_id);
+            if(!existProject){
+                res.status(400).json({message:"alanları kontrol ediniz"});
+            }else{
+                next();
+            }
+        }
+    } catch (error) {
+        next(error);
+    }
+}
+
+module.exports = {
+    validateActionId,
+    validateActionPayload
+}
