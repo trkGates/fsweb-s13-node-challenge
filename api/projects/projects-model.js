@@ -1,5 +1,3 @@
-// BU DOSYADA DEĞİŞİKLİK YAPMAYIN
-// BU DOSYADA DEĞİŞİKLİK YAPMAYIN
 const db = require("../../data/dbConfig.js");
 const mappers = require('../../data/helpers/mappers');
 
@@ -54,10 +52,4 @@ function remove(id) {
   return db("projects")
     .where("id", id)
     .del();
-}
-
-function getProjectActions(projectId) {
-  return db("actions")
-    .where("project_id", projectId)
-    .then(actions => actions.map(action => mappers.actionToBody(action)));
 }
